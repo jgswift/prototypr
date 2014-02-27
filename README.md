@@ -1,6 +1,6 @@
 prototypr
 ====
-PHP 5.4+ object prototyping system using traits
+PHP 5.5+ object prototyping system using traits
 
 [![Build Status](https://travis-ci.org/jgswift/prototypr.png?branch=master)](https://travis-ci.org/jgswift/prototypr)
 

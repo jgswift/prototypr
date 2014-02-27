@@ -1,6 +1,6 @@
 {
     "name": "jgswift/prototypr",
-    "description": "PHP 5.4+ object prototyping system using traits",
+    "description": "PHP 5.5+ object prototyping system using traits",
     "keywords": ["php","magic","prototype","prototypal","trait"],
     "license": "MIT",
     "type": "library",
@@ -13,7 +13,7 @@
         }
     ],    
     "require": {
-        "php": ">=5.4",
+        "php": ">=5.5",
         "jgswift/kindentfy": "dev-master"
     },
     "require-dev": {
