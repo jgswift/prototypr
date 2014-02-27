@@ -79,7 +79,7 @@ class Foo
 }
 
 Foo::bar(function() {
-    return;
+    return "somethingImportant";
 });
 
 class Baz
@@ -90,4 +90,7 @@ class Baz
 prototypr\Manager::extend('Baz','Foo');
 
 var_dump(count(prototypr\Registry::prototypes('Baz'))); // returns 1
+
+$baz = new Baz;
+var_dump($baz->bar()); // returns "somethingImportant"
 ```
