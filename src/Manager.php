@@ -1,6 +1,6 @@
 <?php
 namespace prototypr {
-    use kindentfy;
+    use qtil;
     /**
      * Manager class
      * @package prototypr
@@ -28,7 +28,7 @@ namespace prototypr {
                 return $uid;
             }
 
-            $uid = kindentfy\Identifier::identify($object);
+            $uid = qtil\Identifier::identify($object);
             self::$uids[$uid] = $object;
             return $uid;
         }
@@ -85,32 +85,8 @@ namespace prototypr {
                count($arguments) > 0 && 
                isset($arguments[0]) && 
                $arguments[0] instanceof \Closure) {
-               $newproto = Registry::prototype([$object,$uid],$name,$arguments[0]);
-            }
-
-            if(!isset($newproto) && 
-               !is_bool( $methods = Registry::prototypes($object,$name))) {
-                if(isset($methods) && 
-                   count($methods) > 0) {
-                    foreach($methods as $method) {
-                        if($method instanceof \Closure) {
-                            $method = $method->bindTo($object);
-                        }
-
-                        if(!is_callable($method)) {
-                            throw new Exception(print_r($method,true).' is an invalid callback');
-                        }
-
-                        if(!is_null($result = call_user_func_array($method,$arguments))) {
-                            return $result;
-                        }
-                    }
-
-                    return;
-                }
-            }
-
-            if(!isset($newproto)) {
+               Registry::prototype([$object,$uid],$name,$arguments[0]);
+            } else {
                 throw new Exception('Method ("'.$name.'") not found ("'.get_class($object).'")');
             }
 
@@ -203,7 +179,7 @@ namespace prototypr {
          * @param mixed $scope
          * @return mixed
          */
-        protected static function invoke($class,$name,$arguments,$scope) {
+        protected static function invoke($class,$name,array $arguments,$scope) {
             if(!is_array($class)) {
                 $classes = [$class];
             } else {
@@ -211,46 +187,76 @@ namespace prototypr {
             }
 
             foreach($classes as $class) {
-                $class = strtolower($class);
-                if(empty(Registry::prototypes($class))) {
-                    continue;
-                }
+                return self::invokeDelegate($class,$name,$arguments,$scope);
+            }
+        }
+        
+        /**
+         * Delegates callback handling depending on the number of prototypes
+         * @param string $class
+         * @param string $name
+         * @param array $arguments
+         * @param mixed $scope
+         * @return mixed
+         */
+        protected static function invokeDelegate($class,$name,array $arguments,$scope) {
+            $class = strtolower($class);
+            $methods = Registry::prototypes($class);
+            
+            if(empty($methods)) {
+                return;
+            }
+            
+            $name = strtolower($name);
+            if(array_key_exists($name,$methods)) {
+                $method = $methods[$name];
 
-                $methods = Registry::prototypes($class);
-                $name = strtolower($name);
-                if(array_key_exists($name,$methods)) {
-                    $method = $methods[$name];
-
-                    if(!is_array($method)) {
-                        if($method instanceof \Closure) {
-                            $method = $method->bindTo($scope,$scope);
-                        }
-
-                        // 99% will land here
-                        return call_user_func_array($method,$arguments);
-                    } else {
-                        $results = [];
-                        $c = 0;
-                        foreach($method as $callback) {                
-                            if($callback instanceof \Closure) {
-                                $callback = $callback->bindTo($scope,$scope);
-                            }
-
-                            // 99% will land here
-                            if(($result = call_user_func_array($callback,$arguments)) !== null) {
-                                $results[] = $result;
-                                $c++;
-                            }
-                        }
-
-                        if($c === 1) {
-                            return $results[0];
-                        }
-
-                        return $results;
-                    }
+                if(!is_array($method)) {
+                    return self::invokeSingleCallback($method, $arguments, $scope);
+                } else {
+                    return self::invokeMultipleCallbacks($method, $arguments, $scope);
                 }
             }
+        }
+        
+        /**
+         * Performs callback execution
+         * @param \callable $callback
+         * @param array $arguments
+         * @param mixed $scope
+         * @return mixed
+         */
+        protected static function invokeSingleCallback(callable $callback, array $arguments,$scope) {
+            if($callback instanceof \Closure) {
+                $callback = $callback->bindTo($scope,$scope);
+            }
+
+            return call_user_func_array($callback,$arguments);
+        }
+        
+        /**
+         * Performs callback execution on multiple prototypes with the identical or compatible signatures
+         * @param array $callbacks
+         * @param array $arguments
+         * @param mixed $scope
+         * @return mixed
+         */
+        protected static function invokeMultipleCallbacks(array $callbacks,array $arguments,$scope) {
+            $results = [];
+            $c = 0;
+            
+            foreach($callbacks as $callback) {
+                if(is_callable($callback)) {
+                    $results[] = self::invokeSingleCallback($callback, $arguments, $scope);
+                    $c++;
+                }
+            }
+
+            if($c === 1) {
+                return $results[0];
+            }
+
+            return $results;
         }
     }   
 }
