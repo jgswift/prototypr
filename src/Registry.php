@@ -281,7 +281,8 @@ namespace prototypr {
         }
         
         /**
-         * 
+         * Helper method to handle internal callback storage
+         * and default extension behavior
          * @param string $class
          * @param string $name
          * @param callable $callback
@@ -305,6 +306,14 @@ namespace prototypr {
 
             self::$methods[$class][$name][] = $callback;
 
+            self::autoExtend($class);
+        }
+        
+        /**
+         * Ensures oop-like extensions
+         * @param string $class
+         */
+        private static function autoExtend($class) {
             if(array_key_exists($class,self::$extensions)) {
                 foreach(self::$extensions[$class] as $extension) {
                     if($extension !== $class) {
@@ -312,9 +321,20 @@ namespace prototypr {
                     }
                 }
             }
-
+            
+            self::manageScope($class);
+        }
+        
+        /**
+         * Deliberately forgets scope
+         * @param string $class
+         */
+        private static function manageScope($class) {
             if(Manager::scoped()) {
-                if(strtolower(get_class($return = Manager::scope())) === $class) {
+                $return = Manager::scope();
+                $returnClass = strtolower(get_class($return));
+                        
+                if($returnClass === $class) {
                     Manager::clearScope();
                 }
             }
