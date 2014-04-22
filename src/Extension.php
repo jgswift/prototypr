@@ -18,7 +18,7 @@ namespace prototypr {
          * @param mixed $target
          * @return boolean
          */
-        static function extending($class,$target) {
+        public static function extending($class,$target) {
             if(is_object($class)) {
                 $class = get_class($class);
             }

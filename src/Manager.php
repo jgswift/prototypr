@@ -137,7 +137,7 @@ namespace prototypr {
          * @return boolean
          */
         public static function extending($class,$name) {
-            return Registry::extending($class,$name);
+            return Extension::extending($class,$name);
         }
 
         /**
@@ -147,7 +147,7 @@ namespace prototypr {
          * @param boolean $parents
          * @return mixed
          */
-        static function extend($class,$name,$parents = false) {
+        public static function extend($class,$name,$parents = false) {
             if(is_array($class)) {
                 foreach($class as $c) {
                     self::extend($c,$name,$parents);
