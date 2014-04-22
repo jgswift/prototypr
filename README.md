@@ -3,6 +3,7 @@ prototypr
 PHP 5.5+ object prototyping system using traits
 
 [![Build Status](https://travis-ci.org/jgswift/prototypr.png?branch=master)](https://travis-ci.org/jgswift/prototypr)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jgswift/prototypr/badges/quality-score.png?s=68521f67cca0eea2e8106d27e5ae3109b9405c90)](https://scrutinizer-ci.com/g/jgswift/prototypr/)
 
 ## Installation
 
