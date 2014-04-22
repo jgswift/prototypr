@@ -13,54 +13,11 @@ namespace prototypr {
         private static $methods = [];
         
         /**
-         * array of extensions keyed by class
-         * self::$extensions[class]
-         * @var array 
-         */
-        private static $extensions= [];
-        
-        static function getExtensions($class) {
-            if(is_object($class)) {
-                $class = get_class($class);
-            }
-            
-            $class = strtolower($class);
-            
-            return self::$extensions[$class];
-        }
-        
-        /**
-         * Checks is prototype is extending another
-         * @param mixed $class
-         * @param mixed $target
-         * @return boolean
-         */
-        static function extending($class,$target) {
-            if(is_object($class)) {
-                $class = get_class($class);
-            }
-            
-            if(is_object($target)) {
-                $target = get_class($target);
-            }
-            
-            $target = strtolower($target);
-            $class = strtolower($class);
-            
-            if(array_key_exists($class,self::$extensions) &&
-               in_array($target,self::$extensions[$class])) {
-                return true;
-            }
-            
-            return false;
-        }
-        
-        /**
          * Copies methods from one prototype to another
          * @param mixed $class
          * @param mixed $target
          */
-        static function addExtension($class,$target) {
+        public static function addExtension($class,$target) {
             if(is_object($class)) {
                 $class = get_class($class);
             }
@@ -72,17 +29,13 @@ namespace prototypr {
             $target = strtolower($target);
             $class = strtolower($class);
 
-            if(!array_key_exists($class,self::$extensions)) {
-                self::$extensions[$class] = [];
-            }
-            
-            self::$extensions[$class][] = (string)$target;
-            
-            if(!array_key_exists($target,self::$methods)) {
-                self::$methods[$target] = [];
-            }
+            if(!Extension::extending($class, $target)) {
+                Extension::addExtension($class, $target);
+            } else {
+                if(!array_key_exists($target,self::$methods)) {
+                    self::$methods[$target] = [];
+                }
 
-            if(array_key_exists($target,self::$methods)) {
                 $functions = self::getPrototypes($target);
 
                 if(array_key_exists($class,self::$methods)) {
@@ -156,22 +109,7 @@ namespace prototypr {
                 $class = [$class];
             }
 
-            $results = [];
-            
-            foreach($class as $c) {
-                if(is_object($c)) {
-                    $c = get_class($c);
-                }
-                if(is_string($c) || is_int($c)) {
-                    $c = strtolower($c);
-                    if(is_string($c)) {
-                        if(array_key_exists($c,self::$methods)) {
-                            $results = array_merge(self::getPrototypes($c),$results);
-                            break;
-                        }
-                    }
-                }
-            }
+            $results = self::getAllPrototypes($class);
             
             if(count($results) > 0) {
                 if($name) {
@@ -186,6 +124,32 @@ namespace prototypr {
             }
 
             return false;
+        }
+        
+        /**
+         * Helper method to aggregate prototypes of multiple classes
+         * @param array $classes
+         * @return array
+         */
+        protected static function getAllPrototypes(array $classes) {
+            $results = [];
+            
+            foreach($classes as $c) {
+                if(is_object($c)) {
+                    $c = get_class($c);
+                }
+                if(is_string($c) || is_int($c)) {
+                    $c = strtolower($c);
+                    if(is_string($c)) {
+                        if(array_key_exists($c,self::$methods)) {
+                            $results = array_merge(self::getPrototypes($c),$results);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return $results;
         }
 
         /**
@@ -306,38 +270,7 @@ namespace prototypr {
 
             self::$methods[$class][$name][] = $callback;
 
-            self::autoExtend($class);
-        }
-        
-        /**
-         * Ensures oop-like extensions
-         * @param string $class
-         */
-        private static function autoExtend($class) {
-            if(array_key_exists($class,self::$extensions)) {
-                foreach(self::$extensions[$class] as $extension) {
-                    if($extension !== $class) {
-                        Manager::extend($class,$extension);
-                    }
-                }
-            }
-            
-            self::manageScope($class);
-        }
-        
-        /**
-         * Deliberately forgets scope
-         * @param string $class
-         */
-        private static function manageScope($class) {
-            if(Manager::scoped()) {
-                $return = Manager::scope();
-                $returnClass = strtolower(get_class($return));
-                        
-                if($returnClass === $class) {
-                    Manager::clearScope();
-                }
-            }
+            Extension::autoExtend($class);
         }
     }
 }

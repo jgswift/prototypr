@@ -130,7 +130,13 @@ namespace prototypr {
             return self::$scope;
         }
         
-        static function extending($class,$name) {
+        /**
+         * Checks if extension exists
+         * @param string $class
+         * @param string $name
+         * @return boolean
+         */
+        public static function extending($class,$name) {
             return Registry::extending($class,$name);
         }
 
