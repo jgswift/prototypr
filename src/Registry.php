@@ -48,7 +48,7 @@ namespace prototypr {
             $class = strtolower($class);
             
             if(array_key_exists($class,self::$extensions) &&
-               in_array($target,self::$extensions[$name])) {
+               in_array($target,self::$extensions[$class])) {
                 return true;
             }
             
@@ -106,7 +106,7 @@ namespace prototypr {
                 return self::addPrototype($object,$name,$callback);
             }
             
-            self::removePrototype($object,$name);
+            return self::getPrototype($object,$name);
         }
         
         /**
@@ -261,11 +261,10 @@ namespace prototypr {
          * Add a prototype to a specific class method
          * @param mixed $class
          * @param string $name
-         * @param Closure $callback
-         * @param boolean $parents
+         * @param callable $callback
          * @return mixed
          */
-        protected static function addPrototype($class,$name,$callback,$parents = true) {
+        protected static function addPrototype($class,$name,callable $callback) {
             if(!is_array($class)) {
                 $classes = [$class];
             } else {
@@ -275,40 +274,50 @@ namespace prototypr {
             $name = strtolower($name);
             $return = null;
             foreach($classes as $class) {
-                if(is_object($class)) {
-                    $class = get_class($class);
-                }
+                self::addPrototypeHelper($class, $name, $callback);
+            }
 
-                $class = strtolower($class);
+            return $return;
+        }
+        
+        /**
+         * 
+         * @param string $class
+         * @param string $name
+         * @param callable $callback
+         */
+        private static function addPrototypeHelper($class,$name,callable $callback) {
+            if(is_object($class)) {
+                $class = get_class($class);
+            }
 
-                if(!array_key_exists($class,self::$methods)) {
-                    self::$methods[$class] = [];
-                }
+            $class = strtolower($class);
 
-                if(!array_key_exists($name,self::$methods[$class])) {
-                    self::$methods[$class][$name] = [];
-                } elseif(!is_array(self::$methods[$class][$name])) {
-                    self::$methods[$class][$name] = [self::$methods[$class][$name]];
-                }
+            if(!array_key_exists($class,self::$methods)) {
+                self::$methods[$class] = [];
+            }
 
-                self::$methods[$class][$name][] = $callback;
+            if(!array_key_exists($name,self::$methods[$class])) {
+                self::$methods[$class][$name] = [];
+            } elseif(!is_array(self::$methods[$class][$name])) {
+                self::$methods[$class][$name] = [self::$methods[$class][$name]];
+            }
 
-                if(array_key_exists($class,self::$extensions)) {
-                    foreach(self::$extensions[$class] as $extension) {
-                        if($extension !== $class) {
-                            Manager::extend($class,$extension);
-                        }
-                    }
-                }
+            self::$methods[$class][$name][] = $callback;
 
-                if(Manager::scoped()) {
-                    if(strtolower(get_class($return = Manager::scope())) === $class) {
-                        Manager::clearScope();
+            if(array_key_exists($class,self::$extensions)) {
+                foreach(self::$extensions[$class] as $extension) {
+                    if($extension !== $class) {
+                        Manager::extend($class,$extension);
                     }
                 }
             }
 
-            return $return;
+            if(Manager::scoped()) {
+                if(strtolower(get_class($return = Manager::scope())) === $class) {
+                    Manager::clearScope();
+                }
+            }
         }
     }
 }
