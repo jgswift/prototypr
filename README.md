@@ -14,7 +14,7 @@ php composer.phar require jgswift/prototypr:dev-master
 
 ## Usage
 
-Prototypr is a lightweight php trait that enables easy object prototyping magic methods.
+Prototypr is a lightweight php trait that enables easy object prototyping with magic methods.
 Prototypr aims to add simple prototypal behavior to php without intruding on your domain model
 
 The following is a minimal example
